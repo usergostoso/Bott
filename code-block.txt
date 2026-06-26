@@ -1,0 +1,354 @@
+-- Blox Fruits Auto Farm Ultimate v5.0
+-- WindUI Kaitun Edition
+
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kaizenofficiall/WindUI/main/WindUI.lua"))()
+local Library = WindUI:Init({
+    Name = "Blox Fruits Auto Farm",
+    Key = Enum.KeyCode.RightControl,
+    Folder = "BloxFruitsFarm"
+})
+
+local Main = Library:Tab({
+    Name = "Auto Farm"
+})
+
+local Section1 = Main:Section({
+    Name = "Configurações Principais"
+})
+
+-- Variáveis globais
+_G.AutoFarm = false
+_G.AutoQuest = false
+_G.AutoRaid = false
+_G.AutoSea = false
+_G.AutoChest = false
+_G.AutoBoss = false
+_G.AutoLevel = false
+_G.AutoSword = false
+_G.AutoFruit = false
+_G.AutoBounty = false
+
+-- Toggles
+Section1:Toggle({
+    Name = "Auto Farm Níveis",
+    Description = "Farma níveis automaticamente",
+    Callback = function(bool)
+        _G.AutoFarm = bool
+        if bool then StartAutoFarm() end
+    end
+})
+
+Section1:Toggle({
+    Name = "Auto Quest",
+    Description = "Pega quests automaticamente",
+    Callback = function(bool)
+        _G.AutoQuest = bool
+    end
+})
+
+Section1:Toggle({
+    Name = "Auto Boss",
+    Description = "Mata bosses automaticamente",
+    Callback = function(bool)
+        _G.AutoBoss = bool
+    end
+})
+
+Section1:Toggle({
+    Name = "Auto Sea Events",
+    Description = "Eventos do mar",
+    Callback = function(bool)
+        _G.AutoSea = bool
+    end
+})
+
+Section1:Toggle({
+    Name = "Auto Chest",
+    Description = "Pega baús automaticamente",
+    Callback = function(bool)
+        _G.AutoChest = bool
+    end
+})
+
+-- Função principal de farm
+function StartAutoFarm()
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local Character = LocalPlayer.Character
+    
+    while _G.AutoFarm do
+        wait(0.1)
+        
+        -- Auto Level
+        if _G.AutoLevel then
+            pcall(function()
+                local Level = LocalPlayer.Data.Level.Value
+                local Mobs = {}
+                
+                -- Lista de mobs por nível
+                if Level <= 10 then
+                    Mobs = workspace.Enemies:GetChildren()
+                elseif Level <= 30 then
+                    Mobs = workspace.Enemies:GetChildren()
+                end
+                
+                for _, mob in pairs(Mobs) do
+                    if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                        local Distance = (Character.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude
+                        if Distance < 100 then
+                            Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                            wait(0.5)
+                            -- Atacar
+                            local args = {
+                                [1] = mob.HumanoidRootPart.Position
+                            }
+                            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+                        end
+                    end
+                end
+            end)
+        end
+        
+        -- Auto Quest
+        if _G.AutoQuest then
+            pcall(function()
+                local Quest = LocalPlayer.PlayerGui.Main.Quest
+                if Quest.Visible == false then
+                    -- Pega quest baseado no nível
+                    local Level = LocalPlayer.Data.Level.Value
+                    local NPC = workspace.NPCs:FindFirstChild("QuestGiver")
+                    if NPC then
+                        Character.HumanoidRootPart.CFrame = NPC.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                        wait(1)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", "BanditQuest1", 1)
+                    end
+                end
+            end)
+        end
+        
+        -- Auto Chest
+        if _G.AutoChest then
+            pcall(function()
+                for _, chest in pairs(workspace:GetDescendants()) do
+                    if chest.Name == "Chest" or chest.Name == "Chest1" then
+                        local Distance = (Character.HumanoidRootPart.Position - chest.Position).Magnitude
+                        if Distance < 100 then
+                            Character.HumanoidRootPart.CFrame = CFrame.new(chest.Position)
+                            wait(0.5)
+                            fireclickdetector(chest:FindFirstChild("ClickDetector"))
+                        end
+                    end
+                end
+            end)
+        end
+        
+        -- Auto Sea Events
+        if _G.AutoSea then
+            pcall(function()
+                local SeaEvents = workspace:FindFirstChild("SeaEvents")
+                if SeaEvents then
+                    for _, event in pairs(SeaEvents:GetChildren()) do
+                        if event:FindFirstChild("Humanoid") and event.Humanoid.Health > 0 then
+                            Character.HumanoidRootPart.CFrame = event.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                            wait(0.5)
+                        end
+                    end
+                end
+            end)
+        end
+        
+        -- Auto Boss
+        if _G.AutoBoss then
+            pcall(function()
+                for _, boss in pairs(workspace.Enemies:GetChildren()) do
+                    if boss:FindFirstChild("Humanoid") and boss.Humanoid.Health > 0 then
+                        local Distance = (Character.HumanoidRootPart.Position - boss.HumanoidRootPart.Position).Magnitude
+                        if Distance < 200 then
+                            Character.HumanoidRootPart.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                            wait(0.5)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end
+
+-- Auto Collect Fruits
+local FruitSection = Main:Section({
+    Name = "Auto Fruits & Itens"
+})
+
+FruitSection:Toggle({
+    Name = "Auto Collect Fruits",
+    Description = "Pega frutas automaticamente",
+    Callback = function(bool)
+        _G.AutoFruit = bool
+        if bool then
+            coroutine.wrap(function()
+                while _G.AutoFruit do
+                    wait(1)
+                    pcall(function()
+                        for _, fruit in pairs(workspace:GetDescendants()) do
+                            if fruit:IsA("Tool") and fruit:FindFirstChild("Fruit") then
+                                local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - fruit.Handle.Position).Magnitude
+                                if Distance < 500 then
+                                    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(fruit.Handle.Position)
+                                    wait(0.5)
+                                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, fruit.Handle, 0)
+                                    wait(0.1)
+                                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, fruit.Handle, 1)
+                                end
+                            end
+                        end
+                    end)
+                end
+            end)()
+        end
+    end
+})
+
+FruitSection:Toggle({
+    Name = "Auto Collect Swords",
+    Description = "Pega espadas raras",
+    Callback = function(bool)
+        _G.AutoSword = bool
+        if bool then
+            coroutine.wrap(function()
+                while _G.AutoSword do
+                    wait(2)
+                    pcall(function()
+                        -- Lista de espadas para coletar
+                        local Swords = {
+                            "Saber",
+                            "Dragon Trident",
+                            "Dark Dagger",
+                            "Soul Cane",
+                            "Yama",
+                            "Tushita",
+                            "Buddy Sword",
+                            "Canvander",
+                            "Rengoku",
+                            "Pole v2"
+                        }
+                        
+                        for _, sword in pairs(Swords) do
+                            local SwordPart = workspace:FindFirstChild(sword)
+                            if SwordPart then
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(SwordPart.Position)
+                                wait(0.5)
+                                -- Código para pegar espada
+                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuySword", sword)
+                            end
+                        end
+                    end)
+                end
+            end)()
+        end
+    end
+})
+
+-- Auto Stats
+local StatsSection = Main:Section({
+    Name = "Auto Stats"
+})
+
+StatsSection:Button({
+    Name = "Max Stats",
+    Description = "Coloca stats no máximo",
+    Callback = function()
+        pcall(function()
+            local Level = LocalPlayer.Data.Level.Value
+            local Points = LocalPlayer.Data.Points.Value
+            
+            -- Distribuir pontos
+            if Points > 0 then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", Points/3)
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense", Points/3)
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Sword", Points/3)
+            end
+        end)
+    end
+})
+
+-- Teleports
+local TeleportSection = Main:Section({
+    Name = "Teleports"
+})
+
+TeleportSection:Dropdown({
+    Name = "Ilhas",
+    Description = "Teleport para ilhas",
+    Options = {
+        "Jungle",
+        "Pirate Village",
+        "Desert",
+        "Snow Island",
+        "Marine Fortress",
+        "Sky Island",
+        "Underwater City",
+        "Mansion",
+        "Graveyard",
+        "Ice Castle"
+    },
+    Callback = function(option)
+        local Islands = {
+            Jungle = Vector3.new(-1000, 50, -1000),
+            ["Pirate Village"] = Vector3.new(1000, 50, 1000),
+            Desert = Vector3.new(2000, 50, 2000),
+            ["Snow Island"] = Vector3.new(-2000, 50, -2000),
+            ["Marine Fortress"] = Vector3.new(3000, 50, 3000),
+            ["Sky Island"] = Vector3.new(-3000, 500, -3000),
+            ["Underwater City"] = Vector3.new(4000, -100, 4000),
+            Mansion = Vector3.new(-4000, 50, -4000),
+            Graveyard = Vector3.new(5000, 50, 5000),
+            ["Ice Castle"] = Vector3.new(-5000, 50, -5000)
+        }
+        
+        local Target = Islands[option]
+        if Target and LocalPlayer.Character then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Target)
+        end
+    end
+})
+
+-- Auto Raid
+local RaidSection = Main:Section({
+    Name = "Auto Raid"
+})
+
+RaidSection:Toggle({
+    Name = "Auto Raid",
+    Description = "Faz raid automaticamente",
+    Callback = function(bool)
+        _G.AutoRaid = bool
+        if bool then
+            coroutine.wrap(function()
+                while _G.AutoRaid do
+                    wait(0.5)
+                    pcall(function()
+                        -- Iniciar raid
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Raids", "Start")
+                        
+                        -- Farmar mobs no raid
+                        for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                            if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                                wait(0.3)
+                            end
+                        end
+                    end)
+                end
+            end)()
+        end
+    end
+})
+
+-- Anti AFK
+local AntiAFK = game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(1)
+    game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+print("Script carregado! Pressione RightControl para abrir/fechar a UI")
